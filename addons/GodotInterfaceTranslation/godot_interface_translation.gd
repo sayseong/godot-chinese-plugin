@@ -2552,7 +2552,6 @@ var editor_settings_dialogs: Array
 
 func _translate_tree(t: TreeItem) -> void:
   if not t: return
-  print(t)
   var children = t.get_children()
   while children:
     _translate_tree(children)
