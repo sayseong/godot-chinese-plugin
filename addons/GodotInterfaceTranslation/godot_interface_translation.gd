@@ -2590,6 +2590,7 @@ func translate(n: Node) -> void:
   if n is EditorProperty:
     if dict.has(n.label):
       n.label = dict[n.label]
+      if dict.has(n.hint_tooltip): n.hint_tooltip = dict[n.hint_tooltip]
   elif n is Tree:
     # 响应式翻译
     if not n.is_connected("cell_selected", self, "_on_editor_settings_dialog_about_to_show"):
