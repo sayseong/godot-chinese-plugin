@@ -2549,17 +2549,26 @@ const dict: Dictionary = {
 var inspector_translator = InspectorTranslator.new()
 var editor_settings_dialogs: Array
 
-
 func translate(n: Node) -> void:
-  if  not  n: return
-  if  n  is EditorProperty:
-    if  dict.has(n.label):
+  if not n: return
+#  n.self_modulate = Color8(floor(rand_range(128, 255)), floor(rand_range(128, 255)), floor(rand_range(128, 255)))
+  if n is EditorProperty:
+    if dict.has(n.label):
       n.label = dict[n.label]
-    elif n is Tree:
-      pass
-  elif n.get_child_count() != 0:
+  elif n is Tree:
+    if not n.is_connected("cell_selected", self, "_on_editor_settings_dialog_about_to_show"):
+      n.connect("cell_selected", self, "_on_editor_settings_dialog_about_to_show")
+      n.connect("item_selected", self, "_on_editor_settings_dialog_about_to_show")
+    pass # 等待后续完善
+  if n.get_child_count() != 0:
     for child in n.get_children(): translate(child)
 
+func _on_editor_settings_dialog_about_to_show() -> void:
+  yield(get_tree().create_timer(0.001), "timeout")
+  for i in editor_settings_dialogs: if i.visible: translate(i)
+
+func _exit_tree() -> void:
+  remove_inspector_plugin(inspector_translator)
 
 func _enter_tree() -> void:
   add_inspector_plugin(inspector_translator)
@@ -2572,14 +2581,16 @@ func _enter_tree() -> void:
       editor_settings_dialogs.append(i)
       i.connect("about_to_show", self, "_on_editor_settings_dialog_about_to_show")
 
+class InspectorTranslator extends EditorInspectorPlugin:
+  tool
 
-func _on_editor_settings_dialog_about_to_show() -> void:
-  yield(get_tree().create_timer(0.01), "timeout")
-  for i in editor_settings_dialogs: if i.visible: translate(i)
+  var inspector: EditorInspector
+  var plugin: EditorPlugin
 
+  func parse_end() -> void: if inspector: plugin.translate(inspector)
 
-func _exit_tree() -> void:
-  remove_inspector_plugin(inspector_translator)
+  func can_handle(object: Object) -> bool: return true
+
 
 
 class InspectorTranslator extends EditorInspectorPlugin:
