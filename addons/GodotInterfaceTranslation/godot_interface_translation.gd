@@ -2549,6 +2549,18 @@ const dict: Dictionary = {
 var inspector_translator = InspectorTranslator.new()
 var editor_settings_dialogs: Array
 
+
+func _translate_tree(t: TreeItem) -> void:
+  if not t: return
+  print(t)
+  var children = t.get_children()
+  while children:
+    _translate_tree(children)
+    children = children.get_next()
+  var key = t.get_text(0)
+  if dict.has(key): t.set_text(0, dict[key])
+
+
 func translate(n: Node) -> void:
   if not n: return
 #  n.self_modulate = Color8(floor(rand_range(128, 255)), floor(rand_range(128, 255)), floor(rand_range(128, 255)))
@@ -2556,10 +2568,14 @@ func translate(n: Node) -> void:
     if dict.has(n.label):
       n.label = dict[n.label]
   elif n is Tree:
+    # 响应式翻译
     if not n.is_connected("cell_selected", self, "_on_editor_settings_dialog_about_to_show"):
       n.connect("cell_selected", self, "_on_editor_settings_dialog_about_to_show")
       n.connect("item_selected", self, "_on_editor_settings_dialog_about_to_show")
-    pass # 等待后续完善
+    _translate_tree(n.get_root())
+
+
+
   if n.get_child_count() != 0:
     for child in n.get_children(): translate(child)
 
@@ -2572,14 +2588,13 @@ func _exit_tree() -> void:
 
 func _enter_tree() -> void:
   add_inspector_plugin(inspector_translator)
-
   inspector_translator.inspector = self.get_editor_interface().get_inspector()
   inspector_translator.plugin = self
-
   for i in self.get_editor_interface().get_base_control().get_children():
     if i is WindowDialog: # 翻译项目设置和编辑器设置
       editor_settings_dialogs.append(i)
       i.connect("about_to_show", self, "_on_editor_settings_dialog_about_to_show")
+
 
 class InspectorTranslator extends EditorInspectorPlugin:
   tool
@@ -2587,7 +2602,6 @@ class InspectorTranslator extends EditorInspectorPlugin:
   var inspector: EditorInspector
   var plugin: EditorPlugin
 
-  func parse_end() -> void: if inspector: plugin.translate(inspector)
+  func parse_end() -> void: plugin.translate(inspector)
 
   func can_handle(object: Object) -> bool: return true
-
