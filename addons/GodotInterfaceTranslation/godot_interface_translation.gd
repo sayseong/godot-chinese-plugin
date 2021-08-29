@@ -2591,14 +2591,3 @@ class InspectorTranslator extends EditorInspectorPlugin:
 
   func can_handle(object: Object) -> bool: return true
 
-
-
-class InspectorTranslator extends EditorInspectorPlugin:
-  tool
-  
-  var inspector: EditorInspector
-  var plugin: EditorPlugin
-
-  func parse_end() -> void: plugin.translate(inspector)
-
-  func can_handle(object: Object) -> bool: return true
